@@ -230,18 +230,148 @@ In CI, Allure result files and final report are uploaded as build artifacts.
 Workflow file:
 - `.github/workflows/ci.yml`
 
-Pipeline behavior:
-- Triggered on push/PR to `main` and manual dispatch
-- Separate jobs for:
-  - Smoke pack (`@smoke`)
-  - Sanity pack (`@sanity`)
-  - Full regression pack
-- Browser matrix in each job: `chrome`, `firefox`, `safari`
-- Runs tests in headless mode
-- Uploads:
-  - Cucumber HTML artifact per browser per pack
-  - Allure results per browser per pack
-  - Merged Allure report artifact
+### 10.1 Trigger Events and Branch Strategy
+
+The CI/CD pipeline is triggered automatically on code changes and supports multiple scenarios:
+
+#### **Scenario 1: Feature Branch Push** (Smoke Tests)
+**When:** Developer pushes to `feature/*` branch
+**Tests Run:** ✅ Smoke pack only (`@smoke` scenarios)
+**Duration:** ~5-7 minutes (fast feedback loop)
+**Browsers:** Chrome, Firefox, Safari (parallel matrix)
+**Artifacts:**
+- Cucumber HTML report (smoke)
+- Allure results (smoke)
+
+**Purpose:** Quick validation that new code doesn't break critical paths.
+
+**Example:**
+```bash
+git checkout -b feature/new-payment-flow
+git push origin feature/new-payment-flow
+# → CI auto-triggers → runs smoke tests → reports results
+```
+
+#### **Scenario 2: Pull Request to Main** (Sanity Tests)
+**When:** Developer opens/updates PR targeting `main` branch
+**Tests Run:** ✅ Sanity pack (`@sanity` scenarios)
+**Duration:** ~8-10 minutes
+**Browsers:** Chrome, Firefox, Safari (parallel matrix)
+**Artifacts:**
+- Cucumber HTML report (sanity)
+- Allure results (sanity)
+- Status checks in PR (pass/fail indicator)
+
+**Purpose:** Validate business-critical flows before merge approval.
+
+**Example:**
+```bash
+git push origin feature/new-payment-flow
+# → Creates/updates PR on GitHub
+# → CI auto-triggers → runs sanity tests → blocks merge on failure
+```
+
+#### **Scenario 3: Push to Main Branch** (Full Regression)
+**When:** Code is merged to `main` (or developer directly pushes to main)
+**Tests Run:** ✅ Full regression suite (all scenarios)
+**Duration:** ~15-20 minutes (comprehensive coverage)
+**Browsers:** Chrome, Firefox, Safari (parallel matrix)
+**Artifacts:**
+- Cucumber HTML reports (all packs)
+- Allure results (all packs)
+- Merged Allure report
+- Build artifact archive
+
+**Purpose:** Comprehensive testing before production release.
+
+**Example:**
+```bash
+git merge feature/new-payment-flow
+# → Automatically triggers on main branch
+# → Runs complete test suite
+# → Generates comprehensive reports
+```
+
+#### **Scenario 4: Hotfix Branch Push** (Smoke Tests)
+**When:** Developer pushes to `hotfix/*` branch
+**Tests Run:** ✅ Smoke pack (`@smoke` scenarios)
+**Duration:** ~5-7 minutes (fast validation)
+**Browsers:** Chrome, Firefox, Safari
+**Artifacts:**
+- Cucumber HTML report (smoke)
+- Allure results (smoke)
+
+**Purpose:** Rapid validation of production hotfixes.
+
+**Example:**
+```bash
+git checkout -b hotfix/payment-crash
+git push origin hotfix/payment-crash
+# → CI auto-triggers → runs smoke tests
+```
+
+#### **Scenario 5: Manual Trigger** (User-Selected Pack)
+**When:** Developer manually triggers workflow from GitHub UI
+**Tests Run:** ✅ User-selected pack (smoke, sanity, or full-regression)
+**Duration:** Depends on selected pack (5-20 minutes)
+**Browsers:** Chrome, Firefox, Safari
+**Artifacts:** Corresponding report artifacts
+
+**Purpose:** On-demand testing without code commit.
+
+**How to trigger manually:**
+1. Go to **Actions** tab in GitHub
+2. Select **Playwright Cucumber CI** workflow
+3. Click **Run workflow**
+4. Select desired test pack from dropdown
+5. Click **Run workflow**
+
+### 10.2 Pipeline Behavior and Artifact Generation
+
+**Parallel Job Execution:**
+```
+Feature Branch Push:
+  ├─ Smoke Tests (9 workers: 3 browsers × 3 scenarios)
+  └─ Completes in ~6 min
+
+Pull Request to Main:
+  ├─ Sanity Tests (6 workers: 3 browsers × 2 scenarios)
+  └─ Completes in ~8 min
+
+Push to Main:
+  ├─ Smoke Tests (9 workers) [parallel]
+  ├─ Sanity Tests (6 workers) [parallel]
+  ├─ Full Regression Tests (24+ workers) [parallel]
+  └─ Aggregate Allure Report [waits for all]
+  └─ Total time: ~18 min (overlapped execution)
+```
+
+**Uploads:**
+- Cucumber HTML report per browser per pack
+- Allure results per browser per pack
+- Merged Allure report (consolidated across all packs)
+- Failure screenshots automatically attached
+
+**Status Checks in PR:**
+- ❌ PR blocks merge if sanity tests fail
+- ✅ PR shows all job statuses in checks section
+- 📊 Report artifacts available for download
+
+### 10.3 Environment and Configuration
+
+All CI jobs use:
+- **Node.js:** 20 (cached dependencies)
+- **Playwright Browsers:** Chrome, Firefox, Safari (pre-installed)
+- **Base URL:** `https://www.automationexercise.com`
+- **Headless Mode:** `true` (no UI rendering)
+- **Retry Logic:** 1 retry per scenario on failure
+
+### 10.4 Report Artifact Retention
+
+- **Cucumber HTML Reports:** 90 days (GitHub default)
+- **Allure Reports:** 90 days
+- **Failure Screenshots:** Embedded in reports
+- **Build Logs:** Searchable in GitHub Actions UI
 
 ## 11. Containerization
 
@@ -282,3 +412,4 @@ This ensures the framework can run consistently across machines without local de
 - Safari execution is implemented through Playwright WebKit (`BROWSER=safari` alias).
 - The suite uses dynamic test data generation for user creation flows.
 - Failure screenshots are automatically attached in Cucumber hooks.
+

@@ -2,13 +2,29 @@ name: Playwright Cucumber CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - "feature/**"
+      - "hotfix/**"
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      test_pack:
+        description: "Test pack to run"
+        required: false
+        default: "smoke"
+        type: choice
+        options:
+          - smoke
+          - sanity
+          - full-regression
 
 jobs:
   smoke-tests:
+    if: |
+      github.event_name == 'workflow_dispatch' && github.event.inputs.test_pack == 'smoke' ||
+      github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/hotfix/'))
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -57,6 +73,9 @@ jobs:
           path: allure-results
 
   sanity-tests:
+    if: |
+      github.event_name == 'workflow_dispatch' && github.event.inputs.test_pack == 'sanity' ||
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -105,6 +124,9 @@ jobs:
           path: allure-results
 
   full-regression-tests:
+    if: |
+      github.event_name == 'workflow_dispatch' && github.event.inputs.test_pack == 'full-regression' ||
+      github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -156,6 +178,7 @@ jobs:
     if: always()
     needs: [smoke-tests, sanity-tests, full-regression-tests]
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
