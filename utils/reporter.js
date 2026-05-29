@@ -3,14 +3,18 @@ const fs = require("fs");
 const report = require("multiple-cucumber-html-reporter");
 
 function generateHtmlReport() {
-  const jsonReport = path.resolve(process.cwd(), "reports", "cucumber-report.json");
+  const jsonDir = path.resolve(process.cwd(), "reports", "json");
+  if (!fs.existsSync(jsonDir)) {
+    return;
+  }
 
-  if (!fs.existsSync(jsonReport)) {
+  const jsonFiles = fs.readdirSync(jsonDir).filter((file) => file.endsWith(".json"));
+  if (jsonFiles.length === 0) {
     return;
   }
 
   report.generate({
-    jsonDir: path.resolve(process.cwd(), "reports"),
+    jsonDir,
     reportPath: path.resolve(process.cwd(), "reports", "html"),
     reportName: "Automation Exercise Cucumber Report",
     pageTitle: "Playwright Cucumber Execution Report",

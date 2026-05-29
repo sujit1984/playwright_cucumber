@@ -7,11 +7,13 @@ Feature: Authentication and account lifecycle
   Background:
     Given the user opens the automation exercise home page
 
+  @sanity
   Scenario: Register a new account and delete it
     When the user registers with valid details
     Then the user should be logged in
     And the user deletes the account
 
+  @sanity
   Scenario: Login with invalid credentials should fail
     When the user navigates to signup login page
     And the user logs in with invalid credentials

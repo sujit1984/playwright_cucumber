@@ -6,7 +6,7 @@ const common = [
   "--parallel 4",
   "--retry 1",
   "--format progress-bar",
-  "--format json:reports/cucumber-report.json",
+  `--format json:${process.env.REPORT_JSON || "reports/json/cucumber-report.json"}`,
   "--format allure-cucumberjs/reporter",
 ].join(" ");
 

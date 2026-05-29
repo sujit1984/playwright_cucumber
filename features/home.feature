@@ -7,9 +7,11 @@ Feature: Home page and newsletter subscription
   Background:
     Given the user opens the automation exercise home page
 
+  @sanity
   Scenario: Validate home page loads successfully
     Then the home page should be displayed
 
+  @sanity
   Scenario: Subscribe to newsletter from footer
     When the user subscribes with a unique email address
     Then a subscription success message should be shown

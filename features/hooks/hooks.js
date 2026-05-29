@@ -2,7 +2,6 @@ const {
   Before,
   After,
   BeforeAll,
-  AfterAll,
   Status,
   setDefaultTimeout,
   setWorldConstructor,
@@ -12,7 +11,6 @@ const path = require("path");
 const fs = require("fs");
 const env = require("../../config/env");
 const { launchBrowser, closeBrowser } = require("../../utils/browserManager");
-const { generateHtmlReport } = require("../../utils/reporter");
 
 class CustomWorld extends World {
   constructor(options) {
@@ -57,11 +55,9 @@ BeforeAll(function () {
   if (!fs.existsSync(reportsDir)) {
     fs.mkdirSync(reportsDir, { recursive: true });
   }
-});
 
-AfterAll(function () {
-  // In parallel execution, only one worker should generate a consolidated HTML report.
-  if (!process.env.CUCUMBER_WORKER_ID || process.env.CUCUMBER_WORKER_ID === "0") {
-    generateHtmlReport();
+  const jsonDir = path.resolve(process.cwd(), "reports", "json");
+  if (!fs.existsSync(jsonDir)) {
+    fs.mkdirSync(jsonDir, { recursive: true });
   }
 });
