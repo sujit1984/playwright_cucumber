@@ -1,0 +1,54 @@
+{
+  "name": "playwright_cucumber",
+  "version": "1.0.0",
+  "description": "Playwright + Cucumber JavaScript automation framework for automationexercise.com",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rimraf reports allure-results allure-report",
+    "test": "npm run test:chrome",
+    "test:chrome": "cross-env BROWSER=chrome cucumber-js",
+    "test:firefox": "cross-env BROWSER=firefox cucumber-js",
+    "test:safari": "cross-env BROWSER=safari cucumber-js",
+    "test:all": "npm run test:chrome && npm run test:firefox && npm run test:safari",
+    "test:all:parallel": "concurrently -k -s first -n chrome,firefox,safari \"npm run test:chrome\" \"npm run test:firefox\" \"npm run test:safari\"",
+    "report:html": "node -e \"require('./utils/reporter').generateHtmlReport()\"",
+    "allure:generate": "allure generate allure-results --clean -o allure-report",
+    "allure:open": "allure open allure-report",
+    "test:ci": "npm run clean && npm run test:all"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sujit1984/playwright_cucumber.git"
+  },
+  "keywords": [
+    "playwright",
+    "cucumber",
+    "automation",
+    "qa",
+    "allure",
+    "docker",
+    "github-actions"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sujit1984/playwright_cucumber/issues"
+  },
+  "homepage": "https://github.com/sujit1984/playwright_cucumber#readme",
+  "dependencies": {
+    "@cucumber/cucumber": "^12.9.0",
+    "@playwright/test": "^1.60.0",
+    "allure-cucumberjs": "^3.9.0",
+    "allure-js-commons": "^3.9.0",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.4.2",
+    "multiple-cucumber-html-reporter": "^3.10.0",
+    "rimraf": "^6.1.3"
+  },
+  "devDependencies": {
+    "allure-commandline": "^2.42.0",
+    "concurrently": "^10.0.0",
+    "playwright": "^1.60.0"
+  }
+}
