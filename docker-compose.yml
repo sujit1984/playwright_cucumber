@@ -1,0 +1,15 @@
+services:
+  playwright-cucumber:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: playwright-cucumber-runner
+    environment:
+      - BASE_URL=https://www.automationexercise.com
+      - HEADLESS=true
+      - DEFAULT_TIMEOUT=30000
+      - SCREENSHOT_ON_FAILURE=true
+    volumes:
+      - ./reports:/app/reports
+      - ./allure-results:/app/allure-results
+      - ./allure-report:/app/allure-report

@@ -1,0 +1,89 @@
+name: Playwright Cucumber CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, safari]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Cucumber suite
+        env:
+          BASE_URL: https://www.automationexercise.com
+          HEADLESS: true
+          BROWSER: ${{ matrix.browser }}
+        run: npm run test:${{ matrix.browser }}
+
+      - name: Upload cucumber html artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-html-${{ matrix.browser }}
+          path: reports/html
+
+      - name: Upload allure artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ matrix.browser }}
+          path: allure-results
+
+  aggregate-allure:
+    if: always()
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download allure artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: allure-results-*
+          path: allure-artifacts
+          merge-multiple: true
+
+      - name: Generate Allure report
+        run: |
+          mkdir -p allure-results
+          cp -R allure-artifacts/* allure-results/ || true
+          npm run allure:generate
+
+      - name: Upload merged allure report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
